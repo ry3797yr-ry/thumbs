@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>サムネイルメーカー</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f13;
+    --surface: #1a1a22;
+    --surface2: #23232e;
+    --border: #2e2e3e;
+    --accent: #7c6aff;
+    --accent2: #a78bfa;
+    --text: #e8e8f0;
+    --text2: #9090a8;
+    --radius: 10px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  header .logo {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  header h1 { font-size: 16px; font-weight: 600; letter-spacing: 0.02em; }
+  header span { font-size: 12px; color: var(--text2); margin-left: auto; }
+
+  .workspace {
+    display: flex;
+    flex: 1;
+    gap: 0;
+    height: calc(100vh - 65px);
+  }
+
+  /* === LEFT PANEL === */
+  .panel {
+    width: 300px;
+    min-width: 280px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+
+  /* Upload */
+  .upload-area {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 24px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+  }
+  .upload-area:hover, .upload-area.drag { border-color: var(--accent); background: rgba(124,106,255,0.06); }
+  .upload-area input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .upload-area .icon { font-size: 28px; margin-bottom: 8px; }
+  .upload-area p { font-size: 13px; color: var(--text2); }
+  .upload-area strong { color: var(--text); font-size: 13px; }
+
+  /* Size presets */
+  .size-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .size-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text2);
+    font-size: 11px;
+    font-family: inherit;
+  }
+  .size-btn:hover { border-color: var(--accent); color: var(--text); }
+  .size-btn.active { border-color: var(--accent); background: rgba(124,106,255,0.15); color: var(--accent2); }
+  .size-btn .label { font-weight: 600; font-size: 12px; display: block; color: var(--text); margin-bottom: 2px; }
+
+  .custom-size {
+    display: flex; gap: 6px; align-items: center; margin-top: 6px;
+  }
+  .custom-size input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 10px;
+    color: var(--text);
+    font-size: 12px;
+    font-family: inherit;
+    text-align: center;
+  }
+  .custom-size input:focus { outline: none; border-color: var(--accent); }
+  .custom-size span { color: var(--text2); font-size: 13px; }
+
+  /* Text controls */
+  .text-row { margin-bottom: 10px; }
+  .text-row label { font-size: 11px; color: var(--text2); display: block; margin-bottom: 4px; }
+
+  input[type="text"], textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+    resize: none;
+  }
+  input[type="text"]:focus, textarea:focus { outline: none; border-color: var(--accent); }
+
+  .row2 { display: flex; gap: 8px; }
+  .row2 > * { flex: 1; }
+
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 10px;
+    color: var(--text);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  select:focus { outline: none; border-color: var(--accent); }
+
+  .color-row { display: flex; gap: 8px; align-items: center; }
+  .color-row input[type="color"] {
+    width: 36px; height: 32px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: none;
+    cursor: pointer;
+    padding: 2px;
+  }
+  .color-row input[type="text"] { flex: 1; font-size: 12px; }
+
+  /* Position grid */
+  .pos-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    width: 120px;
+    margin: 0 auto;
+  }
+  .pos-btn {
+    aspect-ratio: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 10px;
+    color: var(--text2);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pos-btn:hover { border-color: var(--accent); }
+  .pos-btn.active { border-color: var(--accent); background: rgba(124,106,255,0.2); color: var(--accent2); }
+
+  /* Image adjust */
+  .adjust-row { margin-bottom: 8px; }
+  .adjust-row label { font-size: 11px; color: var(--text2); display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .adjust-row label span { color: var(--text); font-weight: 500; }
+
+  /* Buttons */
+  .btn {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-secondary {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-secondary:hover { border-color: var(--accent); }
+
+  /* === CANVAS AREA === */
+  .canvas-area {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    background: repeating-conic-gradient(#1a1a22 0% 25%, #15151c 0% 50%) 0 0 / 20px 20px;
+    position: relative;
+  }
+
+  .canvas-wrap {
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  canvas {
+    display: block;
+    max-width: 100%;
+    max-height: calc(100vh - 160px);
+    object-fit: contain;
+  }
+
+  .empty-hint {
+    position: absolute;
+    text-align: center;
+    color: var(--text2);
+    font-size: 14px;
+  }
+  .empty-hint .big { font-size: 48px; margin-bottom: 12px; }
+  .empty-hint p { line-height: 1.7; }
+
+  /* Range value display */
+  .range-row { display: flex; gap: 8px; align-items: center; }
+  .range-row input[type="range"] { flex: 1; }
+  .range-val { font-size: 12px; color: var(--text); min-width: 32px; text-align: right; }
+
+  /* Scrollbar */
+  .panel::-webkit-scrollbar { width: 4px; }
+  .panel::-webkit-scrollbar-track { background: transparent; }
+  .panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  @media (max-width: 700px) {
+    .workspace { flex-direction: column; height: auto; }
+    .panel { width: 100%; min-width: unset; border-right: none; border-bottom: 1px solid var(--border); }
+    .canvas-area { min-height: 280px; padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🖼</div>
+  <h1>サムネイルメーカー</h1>
+  <span>ブラウザ内で完結・無料</span>
+</header>
+
+<div class="workspace">
+
+  <!-- LEFT PANEL -->
+  <div class="panel">
+
+    <!-- 画像アップロード -->
+    <div>
+      <div class="section-title">画像</div>
+      <div class="upload-area" id="uploadArea">
+        <input type="file" id="fileInput" accept="image/*">
+        <div class="icon">📷</div>
+        <strong>タップして画像を選択</strong>
+        <p>JPG・PNG・WebP対応</p>
+      </div>
+    </div>
+
+    <!-- サイズ -->
+    <div>
+      <div class="section-title">サイズ</div>
+      <div class="size-grid">
+        <button class="size-btn active" data-w="1280" data-h="720">
+          <span class="label">YouTube</span>1280×720
+        </button>
+        <button class="size-btn" data-w="1080" data-h="1080">
+          <span class="label">Instagram</span>1080×1080
+        </button>
+        <button class="size-btn" data-w="1200" data-h="630">
+          <span class="label">OGP</span>1200×630
+        </button>
+        <button class="size-btn" data-w="1500" data-h="500">
+          <span class="label">Twitter Header</span>1500×500
+        </button>
+        <button class="size-btn" data-w="1080" data-h="1920">
+          <span class="label">Story</span>1080×1920
+        </button>
+        <button class="size-btn" data-w="800" data-h="450">
+          <span class="label">Blog</span>800×450
+        </button>
+      </div>
+      <div class="custom-size" style="margin-top:10px;">
+        <input type="number" id="customW" placeholder="幅" min="100" max="4000" value="1280">
+        <span>×</span>
+        <input type="number" id="customH" placeholder="高さ" min="100" max="4000" value="720">
+        <button class="btn btn-secondary" id="applyCustom" style="width:auto;padding:7px 10px;font-size:12px;">適用</button>
+      </div>
+    </div>
+
+    <!-- 画像調整 -->
+    <div>
+      <div class="section-title">画像調整</div>
+      <div class="adjust-row">
+        <label>ズーム <span id="zoomVal">100%</span></label>
+        <input type="range" id="zoomSlider" min="10" max="300" value="100">
+      </div>
+      <div class="adjust-row">
+        <label>明るさ <span id="brightnessVal">100%</span></label>
+        <input type="range" id="brightnessSlider" min="0" max="200" value="100">
+      </div>
+      <div class="adjust-row">
+        <label>コントラスト <span id="contrastVal">100%</span></label>
+        <input type="range" id="contrastSlider" min="0" max="200" value="100">
+      </div>
+      <div class="text-row" style="margin-top:8px;">
+        <label>背景色（画像なし時）</label>
+        <div class="color-row">
+          <input type="color" id="bgColor" value="#1a1a2e">
+          <input type="text" id="bgColorHex" value="#1a1a2e" maxlength="7">
+        </div>
+      </div>
+    </div>
+
+    <!-- テキスト -->
+    <div>
+      <div class="section-title">テキスト</div>
+
+      <div class="text-row">
+        <label>テキスト内容</label>
+        <textarea id="textInput" rows="3" placeholder="ここにテキストを入力..."></textarea>
+      </div>
+
+      <div class="text-row">
+        <label>フォント</label>
+        <select id="fontFamily">
+          <option value="'Noto Sans JP', sans-serif">Noto Sans JP（ゴシック）</option>
+          <option value="'Georgia', serif">Georgia（セリフ）</option>
+          <option value="'Arial Black', sans-serif">Arial Black（太め）</option>
+          <option value="'Courier New', monospace">Courier New（等幅）</option>
+          <option value="'Impact', sans-serif">Impact（インパクト）</option>
+        </select>
+      </div>
+
+      <div class="row2">
+        <div class="text-row">
+          <label>サイズ</label>
+          <div class="range-row">
+            <input type="range" id="fontSize" min="10" max="300" value="60">
+            <span class="range-val" id="fontSizeVal">60</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="text-row">
+          <label>太さ</label>
+          <select id="fontWeight">
+            <option value="300">細い</option>
+            <option value="400">普通</option>
+            <option value="700" selected>太い</option>
+            <option value="900">極太</option>
+          </select>
+        </div>
+        <div class="text-row">
+          <label>揃え</label>
+          <select id="textAlign">
+            <option value="left">左</option>
+            <option value="center" selected>中央</option>
+            <option value="right">右</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="text-row">
+        <label>文字色</label>
+        <div class="color-row">
+          <input type="color" id="textColor" value="#ffffff">
+          <input type="text" id="textColorHex" value="#ffffff" maxlength="7">
+        </div>
+      </div>
+
+      <div class="text-row">
+        <label>縁取り色</label>
+        <div class="color-row">
+          <input type="color" id="strokeColor" value="#000000">
+          <input type="text" id="strokeColorHex" value="#000000" maxlength="7">
+        </div>
+      </div>
+
+      <div class="adjust-row">
+        <label>縁取り太さ <span id="strokeVal">2px</span></label>
+        <input type="range" id="strokeWidth" min="0" max="20" value="2">
+      </div>
+
+      <div class="adjust-row">
+        <label>影の強さ <span id="shadowVal">4px</span></label>
+        <input type="range" id="shadowBlur" min="0" max="30" value="4">
+      </div>
+
+      <div class="text-row">
+        <label>テキスト位置</label>
+        <div class="pos-grid" id="posGrid">
+          <button class="pos-btn" data-pos="top-left">↖</button>
+          <button class="pos-btn" data-pos="top-center">↑</button>
+          <button class="pos-btn" data-pos="top-right">↗</button>
+          <button class="pos-btn" data-pos="middle-left">←</button>
+          <button class="pos-btn active" data-pos="middle-center">●</button>
+          <button class="pos-btn" data-pos="middle-right">→</button>
+          <button class="pos-btn" data-pos="bottom-left">↙</button>
+          <button class="pos-btn" data-pos="bottom-center">↓</button>
+          <button class="pos-btn" data-pos="bottom-right">↘</button>
+        </div>
+      </div>
+
+      <div class="adjust-row" style="margin-top:8px;">
+        <label>上下位置オフセット <span id="offsetVal">0px</span></label>
+        <input type="range" id="offsetY" min="-100" max="100" value="0">
+      </div>
+    </div>
+
+    <!-- ダウンロード -->
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button class="btn btn-primary" id="downloadBtn">⬇ JPGでダウンロード</button>
+      <button class="btn btn-secondary" id="resetBtn">リセット</button>
+    </div>
+
+  </div>
+
+  <!-- CANVAS AREA -->
+  <div class="canvas-area" id="canvasArea">
+    <div class="empty-hint" id="emptyHint">
+      <div class="big">🖼</div>
+      <p>左パネルから画像をアップロードするか<br>サイズを選んでテキストのみで作成</p>
+    </div>
+    <div class="canvas-wrap" id="canvasWrap" style="display:none;">
+      <canvas id="mainCanvas"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const fileInput = document.getElementById('fileInput');
+const uploadArea = document.getElementById('uploadArea');
+const canvasWrap = document.getElementById('canvasWrap');
+const emptyHint = document.getElementById('emptyHint');
+
+let state = {
+  image: null,
+  canvasW: 1280,
+  canvasH: 720,
+  zoom: 100,
+  brightness: 100,
+  contrast: 100,
+  bgColor: '#1a1a2e',
+  text: '',
+  fontFamily: "'Noto Sans JP', sans-serif",
+  fontSize: 60,
+  fontWeight: '700',
+  textAlign: 'center',
+  textColor: '#ffffff',
+  strokeColor: '#000000',
+  strokeWidth: 2,
+  shadowBlur: 4,
+  position: 'middle-center',
+  offsetY: 0,
+};
+
+// Init canvas size
+canvas.width = state.canvasW;
+canvas.height = state.canvasH;
+
+function draw() {
+  ctx.save();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Background
+  ctx.fillStyle = state.bgColor;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Image
+  if (state.image) {
+    ctx.save();
+    const scale = state.zoom / 100;
+    const iw = state.image.naturalWidth * scale;
+    const ih = state.image.naturalHeight * scale;
+
+    // Cover fit base
+    const baseScale = Math.max(canvas.width / state.image.naturalWidth, canvas.height / state.image.naturalHeight);
+    const bw = state.image.naturalWidth * baseScale * (state.zoom / 100);
+    const bh = state.image.naturalHeight * baseScale * (state.zoom / 100);
+    const bx = (canvas.width - bw) / 2;
+    const by = (canvas.height - bh) / 2;
+
+    // Filter
+    ctx.filter = `brightness(${state.brightness}%) contrast(${state.contrast}%)`;
+    ctx.drawImage(state.image, bx, by, bw, bh);
+    ctx.restore();
+  }
+
+  // Text
+  if (state.text.trim()) {
+    const lines = state.text.split('\n');
+    const size = parseInt(state.fontSize);
+    ctx.font = `${state.fontWeight} ${size}px ${state.fontFamily}`;
+    ctx.textAlign = state.textAlign;
+    ctx.textBaseline = 'middle';
+
+    // X position
+    let x;
+    const pad = size * 0.5;
+    const hPos = state.position.split('-')[1];
+    if (hPos === 'left') x = pad;
+    else if (hPos === 'right') x = canvas.width - pad;
+    else x = canvas.width / 2;
+
+    // Y position
+    const vPos = state.position.split('-')[0];
+    const lineH = size * 1.3;
+    const totalH = lines.length * lineH;
+    let baseY;
+    if (vPos === 'top') baseY = pad + size / 2;
+    else if (vPos === 'bottom') baseY = canvas.height - pad - totalH + size / 2;
+    else baseY = (canvas.height - totalH) / 2 + size / 2;
+
+    const offsetPx = (state.offsetY / 100) * canvas.height;
+
+    lines.forEach((line, i) => {
+      const y = baseY + i * lineH + offsetPx;
+
+      // Shadow
+      if (state.shadowBlur > 0) {
+        ctx.shadowColor = 'rgba(0,0,0,0.8)';
+        ctx.shadowBlur = state.shadowBlur;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+      }
+
+      // Stroke
+      if (state.strokeWidth > 0) {
+        ctx.strokeStyle = state.strokeColor;
+        ctx.lineWidth = state.strokeWidth * 2;
+        ctx.lineJoin = 'round';
+        ctx.strokeText(line, x, y);
+      }
+
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+
+      // Fill
+      ctx.fillStyle = state.textColor;
+      ctx.fillText(line, x, y);
+    });
+  }
+
+  ctx.restore();
+}
+
+function setCanvasSize(w, h) {
+  state.canvasW = w;
+  state.canvasH = h;
+  canvas.width = w;
+  canvas.height = h;
+  showCanvas();
+  draw();
+}
+
+function showCanvas() {
+  emptyHint.style.display = 'none';
+  canvasWrap.style.display = 'block';
+}
+
+// File upload
+fileInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => {
+    state.image = img;
+    showCanvas();
+    draw();
+  };
+  img.src = URL.createObjectURL(file);
+});
+
+uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('drag'); });
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag'));
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadArea.classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (!file || !file.type.startsWith('image/')) return;
+  const img = new Image();
+  img.onload = () => { state.image = img; showCanvas(); draw(); };
+  img.src = URL.createObjectURL(file);
+});
+
+// Size presets
+document.querySelectorAll('.size-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const w = parseInt(btn.dataset.w);
+    const h = parseInt(btn.dataset.h);
+    document.getElementById('customW').value = w;
+    document.getElementById('customH').value = h;
+    setCanvasSize(w, h);
+  });
+});
+
+document.getElementById('applyCustom').addEventListener('click', () => {
+  const w = Math.max(100, Math.min(4000, parseInt(document.getElementById('customW').value) || 1280));
+  const h = Math.max(100, Math.min(4000, parseInt(document.getElementById('customH').value) || 720));
+  document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+  setCanvasSize(w, h);
+});
+
+// Sliders
+function bindSlider(id, stateKey, valId, suffix, onUpdate) {
+  const el = document.getElementById(id);
+  el.addEventListener('input', () => {
+    state[stateKey] = parseInt(el.value);
+    if (valId) document.getElementById(valId).textContent = el.value + suffix;
+    if (onUpdate) onUpdate();
+    showCanvas();
+    draw();
+  });
+}
+
+bindSlider('zoomSlider', 'zoom', 'zoomVal', '%');
+bindSlider('brightnessSlider', 'brightness', 'brightnessVal', '%');
+bindSlider('contrastSlider', 'contrast', 'contrastVal', '%');
+bindSlider('fontSize', 'fontSize', 'fontSizeVal', '');
+bindSlider('strokeWidth', 'strokeWidth', 'strokeVal', 'px');
+bindSlider('shadowBlur', 'shadowBlur', 'shadowVal', 'px');
+bindSlider('offsetY', 'offsetY', 'offsetVal', 'px');
+
+// Color pickers
+function bindColor(pickerId, hexId, stateKey) {
+  const picker = document.getElementById(pickerId);
+  const hex = document.getElementById(hexId);
+  picker.addEventListener('input', () => {
+    state[stateKey] = picker.value;
+    hex.value = picker.value;
+    showCanvas(); draw();
+  });
+  hex.addEventListener('input', () => {
+    if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) {
+      state[stateKey] = hex.value;
+      picker.value = hex.value;
+      showCanvas(); draw();
+    }
+  });
+}
+
+bindColor('bgColor', 'bgColorHex', 'bgColor');
+bindColor('textColor', 'textColorHex', 'textColor');
+bindColor('strokeColor', 'strokeColorHex', 'strokeColor');
+
+// Text
+document.getElementById('textInput').addEventListener('input', e => {
+  state.text = e.target.value;
+  showCanvas(); draw();
+});
+
+// Selects
+['fontFamily','fontWeight','textAlign'].forEach(id => {
+  document.getElementById(id).addEventListener('change', e => {
+    state[id] = e.target.value;
+    showCanvas(); draw();
+  });
+});
+
+// Position grid
+document.querySelectorAll('.pos-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.pos-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.position = btn.dataset.pos;
+    draw();
+  });
+});
+
+// Download
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  const link = document.createElement('a');
+  link.download = 'thumbnail.jpg';
+  link.href = canvas.toDataURL('image/jpeg', 0.95);
+  link.click();
+});
+
+// Reset
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!confirm('リセットしますか？')) return;
+  location.reload();
+});
+
+// Initial draw (empty canvas with bg)
+showCanvas();
+draw();
+</script>
+</body>
+</html>
